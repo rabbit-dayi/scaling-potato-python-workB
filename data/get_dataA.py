@@ -3,6 +3,7 @@ import requests #pip install requests
 from bs4 import BeautifulSoup #pip install bs4
 from fake_useragent import UserAgent  #pip install fake-useragent
 import re #模糊匹配
+import urllib #自动补全网址
 
 ua = UserAgent() #生成UA
 
@@ -12,13 +13,13 @@ url_auto = 'http://news.sdust.edu.cn/' #补全用的
 def get_pages():
   url1='http://news.sdust.edu.cn/ywcz.htm'
   attempt=0
-  
   headers={'User-Agent':ua.random} #随机生成UA
   res = requests.get(url1,headers=headers)
+  res.encoding = 'utf-8'
   soup = BeautifulSoup(res.text, 'html.parser')
-  ans = soup.find('div',class_='pb_sys_common pb_sys_normal pb_sys_style1')#找到页码的class
-  # ans2 = ans.find('span',text=re.match("*[/]*"))
-  # print(ans2)
+  ans = soup.find('div',class_='pb_sys_common pb_sys_normal pb_sys_style1') #找到页码的class
+  res = ans.find('span',class_='p_t',text=re.compile("[0-9]/[0-9]")).text.split('/')[1]
+  return int(res)
 
 def get_top_news():
   headers={'User-Agent':ua.random} #随机生成UA
@@ -50,4 +51,32 @@ def get_top_news():
   # ans = soup.find('tbody')
   # print(ans)
 
-get_pages()
+def get_news(url):
+  headers={'User-Agent':ua.random} #随机生成UA
+  res = requests.get(url,headers=headers) #生成headers
+  res.encoding = 'utf-8'
+  soup = BeautifulSoup(res.text, 'html.parser')
+  ans = soup.find_all('tr',id=re.compile("line_u4_*"))#模糊匹配line_u4_*
+  for i in ans:
+    # print("-------------------------")
+    t = i.find_all('td')
+    title = t[0]
+    date  = t[1]
+    url  = title.a.attrs['href']
+    title_str=t[0].text
+    date_str=t[1].text
+    url_str = str(url)
+    
+    url_str=urllib.parse.urljoin(url_auto,url_str)
+    str1="{title_str} {date_str} {url}".format(title_str=title_str,date_str=date_str,url=url_str)
+    print(str1)
+
+
+pages_cnt = get_pages()
+for i in range(pages_cnt):
+  url = 'http://news.sdust.edu.cn/ywcz/{}.htm'.format(i)
+  print("------第{}页-------".format(i))
+  get_news(url)
+  print("------第{}页-------".format(i))
+  
+print(get_pages())
