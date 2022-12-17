@@ -43,14 +43,17 @@ def get_pages(url:str):
 
   news_con = soup.find('div',class_ ='v_news_content')
   
-  
+  ls = []
   for i in news_con: #图片添加到目录
     if i == '\n': #不优雅的去除多余的内容
       continue
     if i.find("img") !=None: #寻找图片
       img1 = i.find('img')
-      print(img1)
+      img_=img1.attrs['src']
+      pic_url = fix_url(url,img_)
+      print(pic_url)
+    print(i.get_text())
     # print(i)
   
 
-get_pages(url=url2)
+get_pages(url=url1)
